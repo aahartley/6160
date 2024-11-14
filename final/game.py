@@ -145,9 +145,12 @@ class Game:
                 for enemy, projectiles in collisions_epr.items():
                         #print("Mask collision detected! epr")
                         for projectile in projectiles:
-                            enemy.change_state('dead', True)
-                            self.player.projectiles.remove(projectile)
-                            enemy.kill()
+                            enemy.hit()
+                            #enemy.change_state('dead', True)
+                            #self.player.projectiles.remove(projectile)
+                            projectile.hit = True
+                            if not enemy.alive:
+                                enemy.kill()
                             projectile.kill()
             collisions_pf = pygame.sprite.spritecollide(self.player, self.fireball_sprites, False, collided=pygame.sprite.collide_mask) 
             if collisions_pf:
@@ -161,12 +164,14 @@ class Game:
             collisions_pe = pygame.sprite.spritecollide(self.player, self.enemy_sprites, False, collided=pygame.sprite.collide_mask) 
             if collisions_pe:
                 #print("pe")
+                self.enemy_manager.spawn = False
                 for e in collisions_pe:
                         #print("Mask collision detected! pe")
                         #self.player.alive = False
-                        e.change_state('dead', True)
+                        e.change_state('attack', True)
                         e.kill()
                         self.player.change_state('dead', True)
+                        
             #sort by y                
             self.render_list.sort(key=lambda obj: obj[0])
 

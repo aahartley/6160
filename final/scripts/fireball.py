@@ -57,6 +57,9 @@ class FireballManager:
         if time_since_last_spawn < self.spawn_interval and not self.spawned_this_interval:
             self.add_fireball()
             self.spawned_this_interval = True 
+
+        self.fireball_list = [fb for fb in self.fireball_list if fb.alive]
+
         for fire in self.fireball_list:
                 fire.update(dt)
                 render_list.append((fire.fireball_pos[1],fire))
@@ -160,24 +163,30 @@ class Fireball(pygame.sprite.Sprite):
         self.rect.center = self.fireball_pos
         self.mask = pygame.mask.from_surface(self.draw_surface)
         self.alive = True
+        self.time = 0
     def calculate_angle(self, direction):
         angle = math.degrees(math.atan2(direction.y, direction.x))  
         return angle
     def update(self, dt):
-        self.fireball_pos += self.direction * self.fireball_speed * dt
-        # if self.fireball_pos[0] <= 0:
-        #     self.fireball_pos[0] = 1600
-            #self.fireball_speed =0
-        #self.draw_surface = pygame.transform.smoothscale(self.surface,(80,40)).convert_alpha()
-        self.draw_surface = pygame.transform.rotate(
-            pygame.transform.smoothscale(self.surface, (80, 40)).convert_alpha(),
-            -self.angle +180  # Negative because pygame's rotation is clockwise
-        )
-        self.rect = self.draw_surface.get_bounding_rect()
-        self.rect.center = self.fireball_pos
-        self.mask = pygame.mask.from_surface(self.draw_surface)
+        if self.alive:
+            self.time += dt
+            if(self.time > 5):
+                self.alive = False
+            self.fireball_pos += self.direction * self.fireball_speed * dt
+            # if self.fireball_pos[0] <= 0:
+            #     self.fireball_pos[0] = 1600
+                #self.fireball_speed =0
+            #self.draw_surface = pygame.transform.smoothscale(self.surface,(80,40)).convert_alpha()
+            self.draw_surface = pygame.transform.rotate(
+                pygame.transform.smoothscale(self.surface, (80, 40)).convert_alpha(),
+                -self.angle +180  # Negative because pygame's rotation is clockwise
+            )
+            self.rect = self.draw_surface.get_bounding_rect()
+            self.rect.center = self.fireball_pos
+            self.mask = pygame.mask.from_surface(self.draw_surface)
     def draw(self, screen):
-        screen.blit(self.draw_surface, self.rect)
+        if self.alive:
+            screen.blit(self.draw_surface, self.rect)
         #screen.blit(self.mask.to_surface(), self.rect)
         # r = self.draw_surface.get_rect()
         # r.topleft = self.fireball_pos

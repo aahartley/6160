@@ -39,7 +39,7 @@ class Projectile(pygame.sprite.Sprite):
     
     def update(self, dt):
         #print(direction_vector)
-        if self.fire:
+        if self.fire and not self.hit:
             if self.direction_vector.length() > 0:  
                 direction = self.direction_vector.normalize() 
                 distance_to_move = self.speed * dt  
@@ -77,7 +77,7 @@ class Projectile(pygame.sprite.Sprite):
 
 #might need to pos arrow to more center to curosr??
     def draw(self, screen):
-        if self.fire:
+        if self.fire and not self.hit:
         
 
             # screen.blit(self.shadow_image, self.drawing_rect)

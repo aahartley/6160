@@ -16,54 +16,63 @@ class EnemyManager:
             'attack': ani.Animation(utils.enemy_paths[2],utils.enemy_shadow_paths[2], utils.sprite_frame_dict(5, 4, 256, 256), 100, False, 0),
             'dead' : ani.Animation(utils.enemy_paths[3], utils.enemy_shadow_paths[3], utils.sprite_frame_dict(4, 6, 256, 256), 30, False, 0)
         }
-        self.add_enemy()
         self.last_spawn_time = -1 
+        self.current_level = 1
+        self.level_info = {
+            1: {"health":1, "speed":100},
+            2: {"health":2, "speed":125},
+            3: {"health":3, "speed":150},
+
+        }
+        self.add_enemy()
+        self.time = 0
+        self.spawn = True
+
+
     def fresh_animation(self):
         return {key: animation.copy() for key, animation in self.animations.items()}
 
-    def update(self,dt, render_list, p_position, secs):        
-        if int(secs) % 1 == 0 and int(secs) != 0 and int(secs) != self.last_spawn_time:
-            self.add_enemy()
-            self.last_spawn_time = int(secs)  
-        
+    def update(self,dt, render_list, p_position, secs):  
+        if self.spawn: 
+            if int(secs) % 1 == 0 and int(secs) != 0 and int(secs) != self.last_spawn_time:
+                self.add_enemy()
+                self.last_spawn_time = int(secs)  
+            if int(secs) % 30:
+                if self.current_level < 3:
+                    self.current_level += 1
+            
+            self.enemy_list = [e for e in self.enemy_list if e.state != 'dead']
 
-        for e in self.enemy_list:
-            e.update(dt, p_position)
-            render_list.append((e.position[1],e))
-        self.enemy_list = [e for e in self.enemy_list if e.alive]
+            for e in self.enemy_list:
+                e.update(dt, p_position)
+                render_list.append((e.position[1],e))
 
     def add_enemy(self):
-      # Define the four edges of the diamond using your corner points.
         edges = [
-            (self.corners[0], self.corners[1]),  # Top edge
-            (self.corners[1], self.corners[3]),  # Right edge
-            (self.corners[2], self.corners[3]),  # Bottom edge
-            (self.corners[0], self.corners[2])   # Left edge
+            (self.corners[0], self.corners[1]),  
+            (self.corners[1], self.corners[3]),  
+            (self.corners[2], self.corners[3]),  
+            (self.corners[0], self.corners[2])   
         ]
-
-        # Select a random edge.
         edge = random.choice(edges)
 
-        # Generate a position exactly along the line defined by the chosen edge.
-        # Use interpolation to ensure the spawn point is exactly on the line.
-        t = random.random()  # Random value between 0 and 1 for interpolation
+        t = random.random()
         x = int(edge[0][0] * (1 - t) + edge[1][0] * t)
         y = int(edge[0][1] * (1 - t) + edge[1][1] * t)
-        # Create enemy at (x, y) position on the selected edge
-        enemy = Enemy([x, y], self.fresh_animation())
+        enemy = Enemy([x, y], self.fresh_animation(), self.level_info, self.current_level)
         self.enemy_list.append(enemy)
         self.group.add(enemy)
 
 class Enemy(pygame.sprite.Sprite):
  
-    def __init__(self, position, animations):
+    def __init__(self, position, animations, level_info, level):
         super().__init__()
 
         self.animations = animations
         self.current_animation = self.animations['idle']
         self.image, self.shadow_image = self.current_animation.get_current_frames()
         self.position = pygame.Vector2(position) 
-        self.speed = 100
+        self.speed = level_info[level]["speed"]
         self.target_position = None
         self.state = 'idle'     
         self.angle = 0
@@ -77,6 +86,8 @@ class Enemy(pygame.sprite.Sprite):
         self.local_centroid = pygame.Vector2(self.mask.centroid())
         self.alive = True
         self.last_draw = False
+        self.health = level_info[level]["health"]
+        self.chase = True
 
 
     def change_state(self, state, reset):
@@ -86,7 +97,7 @@ class Enemy(pygame.sprite.Sprite):
         self.current_animation = self.animations[self.state]
 
     def update(self, dt, target_position):
-        if self.alive:
+        if self.alive and self.chase:
             self.target_position = target_position
             if self.state == 'dead':
                 if self.current_animation.check_loop():
@@ -95,6 +106,7 @@ class Enemy(pygame.sprite.Sprite):
             elif self.state == 'attack':
                 if self.current_animation.check_loop():
                     self.change_state('idle', True)
+                    self.chase = False
 
             elif self.target_position:
                     direction_vector = pygame.Vector2(self.target_position - self.position)
@@ -148,7 +160,10 @@ class Enemy(pygame.sprite.Sprite):
 
 
     
-
+    def hit(self):
+        self.health = self.health -1
+        if self.health <= 0:
+            self.change_state('dead', True)
 
 
 
