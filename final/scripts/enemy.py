@@ -44,7 +44,7 @@ class EnemyManager:
 
         for e in self.enemy_list:
             e.update(dt, p_position)
-            render_list.append((e.position[1],e))
+            render_list.append((e.aa_rect.topleft[1] + e.aa_rect.height,e))
 
     def add_enemy(self, current_level ):
         edges = [
@@ -90,10 +90,11 @@ class Enemy(pygame.sprite.Sprite):
 
 
     def change_state(self, state, reset):
-        if reset and self.state != state:
+        if reset and self.state != state and self.state != 'dead':
             self.animations[self.state].reset()
-        self.state = state
-        self.current_animation = self.animations[self.state]
+        if self.state != 'dead':
+            self.state = state
+            self.current_animation = self.animations[self.state]    
 
     def update(self, dt, target_position):
         if self.alive and self.chase:

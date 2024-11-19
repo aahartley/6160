@@ -51,10 +51,11 @@ class Character(pygame.sprite.Sprite):
         self.f_cd = False
 
     def change_state(self, state, reset):
-        if reset and self.state != state:
+        if reset and self.state != state and self.state != 'dead':
             self.animations[self.state].reset()
-        self.state = state
-        self.current_animation = self.animations[self.state]
+        if self.state != 'dead':
+            self.state = state
+            self.current_animation = self.animations[self.state]
 
     def update(self, dt):
         for p in self.projectiles:
@@ -129,7 +130,7 @@ class Character(pygame.sprite.Sprite):
      
 
     def draw(self, screen):
-        for p in self.projectiles:
+        for p in self.projectiles: #put this in render list???
             p.draw(screen)
        
 
@@ -174,6 +175,7 @@ class Character(pygame.sprite.Sprite):
         self.aa_rect.centery = self.position[1]    
         self.mask = pygame.mask.from_surface(self.image)
         self.local_centroid = pygame.Vector2(self.mask.centroid())
+        self.projectiles.clear()
 
     def handle_event(self, event):
         if self.alive:

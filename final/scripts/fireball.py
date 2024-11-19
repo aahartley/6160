@@ -69,7 +69,7 @@ class FireballManager:
 
         for fire in self.fireball_list:
                 fire.update(dt)
-                render_list.append((fire.fireball_pos[1],fire))
+                render_list.append((fire.rect.topleft[1]+fire.rect.height,fire))
 
 
 class FireballSurface:

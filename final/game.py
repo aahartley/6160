@@ -57,6 +57,10 @@ class Game:
             menu_msg = "Press space to start"
             menu_text = self.font.render(menu_msg, True, (255,255,255))
             self.screen.blit(menu_text, ((self.width//2)-self.font.size(menu_msg)[0]//2, (self.height//2)- self.font.size(menu_msg)[1]//2))
+
+            ins_msg = "Instructions: Right Click = move, 'A' = Attack, 'S' = Stop, 'D'= Movement Speed Boost, 'F' = teleport distance towards cursor "
+            ins_text = self.font.render(ins_msg, True, (255,255,255))
+            self.screen.blit(ins_text, ((self.width//2)-self.font.size(ins_msg)[0]//2, (self.height//2 + 100)- self.font.size(ins_msg)[1]//2))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
                     pygame.quit()
@@ -114,11 +118,21 @@ class Game:
                 self.last_level_increase_time = int(self.seconds)  
             fps_text = self.font.render(f"FPS: {int(self.clock.get_fps())}", True, (255, 255, 255))
             score_text = self.font.render(f"Score: {self.seconds:.2f}", True, (255, 255, 255))
+            if self.player.flash_cd == 0:
+                flash_text = self.font.render("Flash: Ready!", True, (255, 255, 255))
+            else:
+                flash_text = self.font.render(f"Flash: {self.player.flash_cd:.2f}", True, (255, 255, 255))
+            if self.player.boost_cd == 0:
+                boost_text = self.font.render("Boost: Ready!", True, (255, 255, 255))
+            else:
+                boost_text = self.font.render(f"Boost: {self.player.boost_cd:.2f}", True, (255, 255, 255))
             self.screen.fill((0,0,0))
             self.floor.draw(self.screen)
 
             self.screen.blit(fps_text,(0,0))
             self.screen.blit(score_text,(1400,0))
+            self.screen.blit(flash_text,(1400,100))
+            self.screen.blit(boost_text,(1400, 150))
 
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -140,7 +154,7 @@ class Game:
             self.player.update(dt)
             for proj in self.player.projectiles:
                 self.projectile_sprites.add(proj)
-            self.render_list.append((self.player.position[1],self.player))
+            self.render_list.append((self.player.aa_rect.topleft[1] + self.player.aa_rect.height,self.player))
             #pygame.draw.rect(self.screen, (255,0,0), self.player.rect, 1)
             # pygame.draw.line(self.screen, (255,0,0), (self.player.rect.width//2+self.player.rect.x,self.player.rect.y ), (self.player.rect.width//2+self.player.rect.x,self.player.rect.y + self.player.rect.height))
             # pygame.draw.line(self.screen, (255,0,0), (self.player.rect.x, self.player.rect.height//2+self.player.rect.y), (self.player.rect.x + self.player.rect.width,self.player.rect.height//2+self.player.rect.y))
