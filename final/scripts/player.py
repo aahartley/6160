@@ -42,6 +42,14 @@ class Character(pygame.sprite.Sprite):
         self.alive = True
         self.last_draw = False
 
+        self.speed_time = 0
+        self.boost = False
+        self.boost_cd = 0
+        self.b_cd = False
+
+        self.flash_cd = 0
+        self.f_cd = False
+
     def change_state(self, state, reset):
         if reset and self.state != state:
             self.animations[self.state].reset()
@@ -52,12 +60,29 @@ class Character(pygame.sprite.Sprite):
         for p in self.projectiles:
             p.update(dt)
         self.projectiles = [p for p in self.projectiles if not p.hit]
+        if(self.boost):
+            self.speed_time += dt
+            if(self.speed_time > 5):
+                self.speed_time = 0
+                self.boost = False
+                self.speed = 300
+                self.b_cd = True
+        if(self.b_cd):
+            self.boost_cd += dt
+            if(self.boost_cd >= 5):
+                self.b_cd = False
+                self.boost_cd = 0
+        if(self.f_cd):
+            self.flash_cd += dt
+            if(self.flash_cd >= 5):
+                self.f_cd = False
+                self.flash_cd = 0
 
         if self.state == 'dead':
             if self.current_animation.check_loop():
                 self.current_animation.active = False
-                self.change_state('idle', True)
-                #self.last_draw = True
+                #self.change_state('idle', True)
+                self.last_draw = True
 
         elif self.state == 'attack':
             if(self.current_animation.frame >=15):
@@ -123,9 +148,32 @@ class Character(pygame.sprite.Sprite):
 
 
     
+    def reset(self):
+        self.change_state("idle", True)
+        self.speed = 300
+        self.position = pygame.Vector2(800, 450)
+        self.speed_time = 0
+        self.boost = False
+        self.boost_cd = 0
+        self.b_cd = False
 
-
-
+        self.flash_cd = 0
+        self.f_cd = False
+        self.alive = True
+        self.last_draw = False
+        self.target_position = None
+        self.right_click_held = False
+        self.state = 'idle'     
+        self.angle = 0
+        self.real_angle = 90
+        self.rect = self.image.get_rect()
+        self.aa_rect = self.image.get_bounding_rect()
+        # self.rect.centerx = position[0]
+        # self.rect.centery = position[1]
+        self.aa_rect.centerx = self.position[0]
+        self.aa_rect.centery = self.position[1]    
+        self.mask = pygame.mask.from_surface(self.image)
+        self.local_centroid = pygame.Vector2(self.mask.centroid())
 
     def handle_event(self, event):
         if self.alive:
@@ -162,7 +210,24 @@ class Character(pygame.sprite.Sprite):
 
                         self.change_state('attack', False)
                         self.target_position = None
+                if event.key == pygame.K_f:
+                    if not self.f_cd:
+                        self.f_cd = True
+                        mouse_pos = pygame.mouse.get_pos()
+                        target = pygame.Vector2(mouse_pos)
+                        dist =  self.position.distance_to(target)
 
+                        if dist > 300:
+                            direction = (target - self.position).normalize()  
+                            if direction.length() > 0: 
+                                target = self.position + direction * 300  
+
+                        self.position = target
+                if event.key == pygame.K_d:
+                    if not self.boost and not self.b_cd:
+                        self.boost = True
+                        self.speed *= 1.5
+               
  
     def calculate_angle(self, position, target_position):
             direction_vector = target_position - position

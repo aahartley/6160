@@ -15,16 +15,23 @@ class FireballManager:
         #     self.fireball_list.append(fireball)
         #     self.group.add(self.fireball_list[-1])
         self.last_spawn_time = -1 
-        self.spawn_interval = 0.25
+        self.spawn_interval = 0.5
+        self.spawned_this_interval = False  
+    
+    def reset(self):
+        self.group.empty()
+        self.fireball_list.clear()
+        self.last_spawn_time = -1 
+        self.spawn_interval = 0.5
         self.spawned_this_interval = False  
 
     def add_fireball(self):
         edges = [
-        (self.corners[0], self.corners[1]),  # Top edge
-        (self.corners[1], self.corners[3]),  # Right edge
-        (self.corners[2], self.corners[3]),  # Bottom edge
-        (self.corners[0], self.corners[2])   # Left edge
-    ]
+            ((0, 0), (1600, 0)),  # Top edge
+            ((1600, 0), (1600, 900)),  # Right edge
+            ((1600, 900), (0, 900)),  # Bottom edge
+            ((0, 900), (0, 0))   # Left edge
+        ]
 
         inward_normals = [
             pygame.Vector2(0, 1),   # Top edge (points down)

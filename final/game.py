@@ -43,8 +43,11 @@ class Game:
         self.runnning = False
         self.render_list = []
         self.seconds = 0
+        self.current_level = 1
+        self.last_level_increase_time = -1 
 
-
+        self.frames = 0
+        self.re = False
 
 
     def menu(self):
@@ -70,7 +73,7 @@ class Game:
         while over_loop:
             #self.screen.fill('black')
             over_msg = "Press space to restart"
-            over_text = self.font.render(over_msg, True, (255,255,255))
+            over_text = self.font.render(over_msg, True, (255,255,255), (0,0,0))
             self.screen.blit(over_text, ((self.width//2)-self.font.size(over_msg)[0]//2, (self.height//2)- self.font.size(over_msg)[1]//2))
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -79,18 +82,36 @@ class Game:
                 if event.type == pygame.KEYDOWN:
                     if event.key == pygame.K_SPACE:
                         self.running = True
-                        #over_loop = False
+                        over_loop = False
+                        self.reset()
+                        self.re = True
             pygame.display.update()
+    def reset(self):
+        self.current_level = 1
+        self.enemy_manager.reset()
+        self.fireball_manager.reset()
+        self.player.reset()
+        self.seconds = 0
+        self.frames = 0
 
     def run(self):
         self.menu()
-        frames = 0
+        self.frames = 0
         particles = 0
         while self.running:
             dt = self.clock.tick(60)/1000
-            if frames == 0:
+            if self.re:
+                self.reset()
+                self.re = False
+            if self.frames == 0:
                 dt = 0.016
+
             self.seconds += dt
+            if int(self.seconds) % 30 == 0 and self.last_level_increase_time != int(self.seconds) and int(self.seconds) != 0:
+                if self.current_level < 3:
+                    self.current_level += 1
+                    print(self.current_level)
+                self.last_level_increase_time = int(self.seconds)  
             fps_text = self.font.render(f"FPS: {int(self.clock.get_fps())}", True, (255, 255, 255))
             score_text = self.font.render(f"Score: {self.seconds:.2f}", True, (255, 255, 255))
             self.screen.fill((0,0,0))
@@ -133,9 +154,8 @@ class Game:
 
             # pygame.draw.line(self.screen, (255,0,0), (self.width//2, 0), (self.width//2,self.height))
             # pygame.draw.line(self.screen, (255,0,0), (0, self.height//2), (self.width,self.height//2))
-            self.enemy_manager.update(dt, self.render_list, self.player.position, self.seconds)
- 
 
+            self.enemy_manager.update(dt, self.render_list, self.player.position, self.seconds, self.current_level)
             self.fireball_manager.update(dt, self.render_list, self.seconds)
     
 
@@ -144,13 +164,12 @@ class Game:
                 #print("epr")
                 for enemy, projectiles in collisions_epr.items():
                         #print("Mask collision detected! epr")
+                        enemy.hit()
+                        if enemy.state == "dead":
+                            enemy.kill()
                         for projectile in projectiles:
-                            enemy.hit()
-                            #enemy.change_state('dead', True)
                             #self.player.projectiles.remove(projectile)
                             projectile.hit = True
-                            if not enemy.alive:
-                                enemy.kill()
                             projectile.kill()
             collisions_pf = pygame.sprite.spritecollide(self.player, self.fireball_sprites, False, collided=pygame.sprite.collide_mask) 
             if collisions_pf:
@@ -164,7 +183,7 @@ class Game:
             collisions_pe = pygame.sprite.spritecollide(self.player, self.enemy_sprites, False, collided=pygame.sprite.collide_mask) 
             if collisions_pe:
                 #print("pe")
-                self.enemy_manager.spawn = False
+                #self.enemy_manager.spawn = False
                 for e in collisions_pe:
                         #print("Mask collision detected! pe")
                         #self.player.alive = False
@@ -182,8 +201,8 @@ class Game:
             # self.enemy_sprites.empty()
             # self.fireball_sprites.empty()
 
-            # if not self.player.alive:
-            #     self.game_over()
+            if not self.player.alive:
+                self.game_over()
 
 
             # start_time = time.time()  # Start timer
@@ -211,7 +230,7 @@ class Game:
             particles = 0
     
 
-            frames += 1
+            self.frames += 1
     
             pygame.display.update()
 Game().run()

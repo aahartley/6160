@@ -17,37 +17,36 @@ class EnemyManager:
             'dead' : ani.Animation(utils.enemy_paths[3], utils.enemy_shadow_paths[3], utils.sprite_frame_dict(4, 6, 256, 256), 30, False, 0)
         }
         self.last_spawn_time = -1 
-        self.current_level = 1
         self.level_info = {
             1: {"health":1, "speed":100},
             2: {"health":2, "speed":125},
             3: {"health":3, "speed":150},
 
         }
-        self.add_enemy()
-        self.time = 0
         self.spawn = True
+    
+    def reset(self):
+        self.group.empty()
+        self.enemy_list.clear()
+        self.last_spawn_time = -1
 
 
     def fresh_animation(self):
         return {key: animation.copy() for key, animation in self.animations.items()}
 
-    def update(self,dt, render_list, p_position, secs):  
-        if self.spawn: 
-            if int(secs) % 1 == 0 and int(secs) != 0 and int(secs) != self.last_spawn_time:
-                self.add_enemy()
+    def update(self,dt, render_list, p_position, secs, current_level):  
+        if int(secs) % 1 == 0 and int(secs) != 0 and int(secs) != self.last_spawn_time:
+            if self.spawn: 
+                self.add_enemy(current_level)
                 self.last_spawn_time = int(secs)  
-            if int(secs) % 30:
-                if self.current_level < 3:
-                    self.current_level += 1
-            
-            self.enemy_list = [e for e in self.enemy_list if e.state != 'dead']
 
-            for e in self.enemy_list:
-                e.update(dt, p_position)
-                render_list.append((e.position[1],e))
+        self.enemy_list = [e for e in self.enemy_list if e.alive]
 
-    def add_enemy(self):
+        for e in self.enemy_list:
+            e.update(dt, p_position)
+            render_list.append((e.position[1],e))
+
+    def add_enemy(self, current_level ):
         edges = [
             (self.corners[0], self.corners[1]),  
             (self.corners[1], self.corners[3]),  
@@ -59,7 +58,7 @@ class EnemyManager:
         t = random.random()
         x = int(edge[0][0] * (1 - t) + edge[1][0] * t)
         y = int(edge[0][1] * (1 - t) + edge[1][1] * t)
-        enemy = Enemy([x, y], self.fresh_animation(), self.level_info, self.current_level)
+        enemy = Enemy([x, y], self.fresh_animation(), self.level_info, current_level)
         self.enemy_list.append(enemy)
         self.group.add(enemy)
 
